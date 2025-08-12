@@ -6,31 +6,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestPushService_Push(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"sendno": "test-sendno", "msg_id": 123456789}`))
+		w.Write([]byte(`{"sendno": "test-sendno", "msg_id": "123456789"}`))
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["push"] = server.URL
 
 	all := "all"
 	request := &PushRequest{
+		Platform: NewAllPlatform().GetPlatforms(),
 		Audience: &Audience{
 			All: &all,
 		},
@@ -43,41 +36,27 @@ func TestPushService_Push(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "test-sendno", result.SendNo)
-	assert.Equal(t, int64(123456789), result.MsgID)
+	assert.Equal(t, "123456789", result.MsgID)
 }
 
 func TestPushService_Push_InvalidRequest(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
-	// 测试nil请求
+	// 测试空请求
 	_, err = client.Push.Push(nil)
 	assert.Error(t, err)
-	
+
 	if jpushErr, ok := err.(*JPushError); ok {
 		assert.Equal(t, ErrorCodeInvalidParams, jpushErr.Code)
 	}
 }
 
 func TestPushService_Push_ValidationError(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
-	// 测试无效的推送请求（缺少audience）
+	// 测试无效的推送请求（缺少platform）
 	request := &PushRequest{
 		Notification: &Notification{
 			Alert: "Test notification",
@@ -99,20 +78,14 @@ func TestPushService_Push_HTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["push"] = server.URL
 
 	all2 := "all"
 	request := &PushRequest{
+		Platform: NewAllPlatform().GetPlatforms(),
 		Audience: &Audience{
 			All: &all2,
 		},
@@ -137,20 +110,14 @@ func TestPushService_Push_InvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["push"] = server.URL
 
 	all3 := "all"
 	request := &PushRequest{
+		Platform: NewAllPlatform().GetPlatforms(),
 		Audience: &Audience{
 			All: &all3,
 		},
@@ -178,6 +145,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "valid request with all audience",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Audience: &Audience{
 					All: &all,
 				},
@@ -190,6 +158,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "valid request with tag audience",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Audience: &Audience{
 					Tag: []string{"tag1", "tag2"},
 				},
@@ -202,6 +171,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "valid request with alias audience",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Audience: &Audience{
 					Alias: []string{"alias1", "alias2"},
 				},
@@ -214,6 +184,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "valid request with registration_id audience",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Audience: &Audience{
 					RegistrationID: []string{"reg1", "reg2"},
 				},
@@ -226,6 +197,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "valid request with message",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Audience: &Audience{
 					All: &all,
 				},
@@ -244,6 +216,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "nil audience",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Notification: &Notification{
 					Alert: "Test",
 				},
@@ -254,6 +227,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "empty audience",
 			request: &PushRequest{
+				Platform:     NewAllPlatform().GetPlatforms(),
 				Audience:     &Audience{},
 				Notification: &Notification{Alert: "Test"},
 			},
@@ -263,6 +237,7 @@ func TestValidatePushRequest(t *testing.T) {
 		{
 			name: "no notification or message",
 			request: &PushRequest{
+				Platform: NewAllPlatform().GetPlatforms(),
 				Audience: &Audience{
 					All: &all,
 				},

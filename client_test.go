@@ -11,20 +11,14 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
-	assert.Equal(t, "test-key", client.appKey)
-	assert.Equal(t, "test-secret", client.masterSecret)
 	assert.NotNil(t, client.httpClient)
 	assert.NotNil(t, client.logger)
+	// 验证配置已正确加载
+	assert.NotEmpty(t, client.appKey)
+	assert.NotEmpty(t, client.masterSecret)
 }
 
 func TestNewClient_ValidationErrors(t *testing.T) {
@@ -100,11 +94,13 @@ func TestNewClient_ValidationErrors(t *testing.T) {
 }
 
 func TestNewClientWithTimeout(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
+	testConfig, err := LoadTestConfig()
+	assert.NoError(t, err)
 	
+	logger, _ := zap.NewDevelopment()
 	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
+		AppKey:       testConfig.AppKey,
+		MasterSecret: testConfig.MasterSecret,
 		Logger:       logger,
 		Timeout:      10 * time.Second,
 	}
@@ -123,14 +119,7 @@ func TestClient_MakeRequest_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	resp, err := client.makeRequestWithoutContext("GET", server.URL, "/test", nil)
@@ -147,14 +136,7 @@ func TestClient_MakeRequest_HTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	_, err = client.makeRequestWithoutContext("GET", server.URL, "/test", nil)
@@ -173,14 +155,7 @@ func TestClient_MakeRequest_InvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	_, err = client.makeRequestWithoutContext("GET", server.URL, "/test", nil)
@@ -198,16 +173,11 @@ func TestClient_MakeRequest_Timeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-		Timeout:      1 * time.Millisecond,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
+	
+	// 设置超时时间
+	client.httpClient.Timeout = 1 * time.Millisecond
 
 	_, err = client.makeRequestWithoutContext("GET", server.URL, "/test", nil)
 	assert.Error(t, err)

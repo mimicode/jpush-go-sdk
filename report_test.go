@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestReportService_GetReceivedDetail(t *testing.T) {
@@ -18,14 +17,7 @@ func TestReportService_GetReceivedDetail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -37,14 +29,7 @@ func TestReportService_GetReceivedDetail(t *testing.T) {
 }
 
 func TestReportService_GetReceivedDetail_InvalidParams(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	// 测试空的msgIDs
@@ -71,14 +56,7 @@ func TestReportService_GetReceivedDetail_HTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -100,14 +78,7 @@ func TestReportService_GetReceived(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -119,14 +90,7 @@ func TestReportService_GetReceived(t *testing.T) {
 }
 
 func TestReportService_GetReceived_InvalidParams(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	// 测试空的msgIDs
@@ -146,14 +110,7 @@ func TestReportService_GetMessageStatus(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -170,14 +127,7 @@ func TestReportService_GetMessageStatus(t *testing.T) {
 }
 
 func TestReportService_GetMessageStatus_InvalidParams(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	// 测试nil请求
@@ -211,14 +161,7 @@ func TestReportService_GetMessageDetail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -229,14 +172,7 @@ func TestReportService_GetMessageDetail(t *testing.T) {
 }
 
 func TestReportService_GetMessageDetail_InvalidParams(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 
 	// 测试空的msgID
@@ -256,14 +192,7 @@ func TestReportService_InvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -316,14 +245,7 @@ func TestReportService_EmptyResponse(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
 	
 	client.baseURLs["report"] = server.URL
@@ -341,16 +263,11 @@ func TestReportService_NetworkTimeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logger, _ := zap.NewDevelopment()
-	config := &Config{
-		AppKey:       "test-key",
-		MasterSecret: "test-secret",
-		Logger:       logger,
-		Timeout:      1 * time.Millisecond,
-	}
-	
-	client, err := NewClient(config)
+	client, err := NewTestClient()
 	assert.NoError(t, err)
+	
+	// 设置超时时间
+	client.httpClient.Timeout = 1 * time.Millisecond
 	
 	client.baseURLs["report"] = server.URL
 
